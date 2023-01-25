@@ -7,8 +7,10 @@ The horrors of dealing with an unidiomatic API: A review of the JQWidgets widget
 I started in Web and Full Stack development back in 2016. My experience with JS and other programming was limited to some college projects. The team had adopted this nice-looking Widgets library called JQWidgets by then. On the surface, it looks competently done, but as soon as I started development work with it, I quickly found that it was plagued with a few problems. No, I don't just mean problems like display glitches that I have to hack around. If that was all, I would be happy leaving it alone.
 
 # The JQuery API
+I will be talking about the JQuery API and its baseline usage.
 
 ## Creating widgets
+How do you create a widget, first of all?
 
 ```js
 // The pattern is: <JQuery>.jqx<widgetName>(<widgetOptions>), E.g.
@@ -26,7 +28,7 @@ As advertised in the [docs][1], you call methods like this:
 // Select row by index 1
 $("#jqxgrid").jqxGrid('selectrow', 1);
 ```
-This is awful (even if I ignore the non-camelcased `selectrow`). Why do I have to specify the method I want to call as a string argument to another function? A well designed APi would have let you obtain a reference to the grid, then call the method like so:
+This is awful (even if I ignore the non-camelcased `selectrow`). Why do I have to specify the method I want to call as a string argument to another function? A well designed API would have let you obtain a reference to the grid, then call the method like so:
 ```js
 gridReference.selectrow(1);
 ```
@@ -37,7 +39,7 @@ You get properties of the grid like this:
 ```js
 var filter = $('#jqxGrid').jqxGrid('filter');
 ```
-Looks fairly innocuous, I suppose. But wait... what if there was a zero-argument method called `filter` too? You guessed it. It would look the __exact same__. A sensible API would have let you do this:
+Looks fairly innocuous, I suppose. But wait... what if there was a zero-argument method called `filter` too? You guessed it. It would look the ___exact same___. A sensible API would have let you do this:
 ```js
 const filter = gridReference.filter;
 ```
@@ -57,7 +59,7 @@ The first way, while less offensive, still is a problem because it's ambiguous w
 ```js
 gridRef.selectionmode = 'none';
 ```
-But... you want the widget to refresh on update. So create a method for setting options. DevExtreme does this, for example:
+But... you want the widget to refresh when the property is updated. So create a method for setting options. DevExtreme does this, for example:
 ```js
 gridRef.option({prop: 'none'});
 // Or even this;
@@ -68,7 +70,7 @@ Do the docs show anything like this? Again, no.
 ## Problem 4: Static analysis and TypeScript
 TypeScript is wonderful. It fixes a lot of the underlying problems that plain JS has. However, the benefit is nullified if you don't have good types to begin with. Because everything is done with strings in JQWidgets, it's extremely difficult to at least hack together a type declaration file that annotates the return type of all these methods. (Plus it's really not my job.) So it looks like there's no choice but to slap `any` everywhere...
 
-...Or not? You see, they actually made a .d.ts file. It's [right here][2], tucked away in their Angular integration code. So that's it, right? All the bad times are over? Well, no. Even if you import it into your TS project, stuff like above is _still_ not recognized. It also has no JSDoc annotations, and `any`s a plenty. So back to square one.
+...Or not? You see, they actually made a .d.ts file. It's [right here][2], tucked away in their Angular integration code. So that's it, right? All the bad times are over? Well, no. Even if you import it into your TS project, the documented JQuery API is _still_ not recognized. It also has no JSDoc annotations, and `any`s a plenty. So back to square one, it would seem...
 
 Oh, wait... what's this method? Oh, my...
 
