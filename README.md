@@ -108,7 +108,7 @@ Just be aware that this is not guaranteed to work, and you still have to add thi
 # Appendix B: The overriding .d.ts file
 I mentioned this several times in mitigation strategies above, but you can augment their .d.ts file with your own. 
 
-(To add later.)
+I have added a skeleton in this repository: https://github.com/calculuswhiz/jqwidgets-review/blob/main/mitigations.d.ts
 
 [1]: https://www.jqwidgets.com/jquery-widgets-documentation/documentation/jqxgrid/jquery-grid-api.htm
 [2]: https://github.com/jqwidgets/jQWidgets/blob/9b1b78202c4182592fccfcf5dd0216728f1417bf/jqwidgets-ts/jqwidgets.d.ts
