@@ -4,58 +4,66 @@ The horrors of dealing with an unidiomatic API: A review of the JQWidgets widget
 
 # Introduction
 
-I started in Web and Full Stack development back in 2016. My experience with JS and other programming was limited to some college projects. The team had adopted this nice-looking Widgets library called JQWidgets by then. On the surface, it looks competently done, but as soon as I started development work with it, I quickly found that it was plagued with a few problems. No, I don't just mean problems like display glitches that I have to hack around. If that was all, I would be happy leaving it alone.
+I started in Web and Full Stack development back in 2016. The team I joined had adopted this nice-looking Widgets library called JQWidgets by then. On the surface, it looked competently done, but as soon as I started development work with it, I quickly found that it was plagued with some major problems. No, I don't just mean problems like display glitches that I have to hack around. If that was all, I would be happy leaving it alone. I'm talking about **fundamental issues** that JQWidgets has at the programming language and development level.
 
 # The JQuery API
-I will be talking about the JQuery API and its baseline usage.
+For the sake of this review, I will only be looking primarily at the jQuery API since I have not worked with their other frameworks.
 
 ## Creating widgets
-How do you create a widget, first of all?
+First, the basics. This is how you create a widget. In this case, I'm making a grid:
 
 ```js
 // The pattern is: <JQuery>.jqx<widgetName>(<widgetOptions>), E.g.
 $('#data-grid').jqxGrid(
 {
   width: '100%',
-  //etc...
+  // Other properties
 });
 ```
-OK, so far so good. I understand that I'm attaching the Grid widget to the element designated by `$(#dataGrid)`. No major sins here. But what happens if I want to do anything with it?
+OK, so far so good. I understand that I'm attaching the Grid widget to the element designated by id `dataGrid`. No major sins here. But what happens if I want to do anything with it?
 
 ## Problem 1: Method calls
+
 As advertised in the [docs][1], you call methods like this:
 ```js
 // Select row by index 1
 $("#jqxgrid").jqxGrid('selectrow', 1);
 ```
-This is awful (even if I ignore the non-camelcased `selectrow`). Why do I have to specify the method I want to call as a string argument to another function? A well designed API would have let you obtain a reference to the grid, then call the method like so:
+This is awful (ignore the non-camelcased `selectrow`). One should not have to specify a method's name as a string method to another method.
+
+A well designed API would have let you obtain a reference to the grid, then call the method like so:
 ```js
 gridReference.selectrow(1);
 ```
-But how? There's no documented way to do this. (Keep this in mind for later.)
+Unfortunately there's no _documented_ way to do this.
 
 ## Problem 2: Getting Properties
+
 You get properties of the grid like this:
 ```js
 var filter = $('#jqxGrid').jqxGrid('filter');
 ```
-Looks fairly innocuous, I suppose. But wait... what if there was a zero-argument method called `filter` too? You guessed it. It would look the ___exact same___. A sensible API would have let you do this:
+...which is exactly how you would call a zero-argument method called `filter`. There's no way to distinguish between a zero-argument function call and a property retrieval.
+
+A sensible API would have let you do this:
 ```js
 const filter = gridReference.filter;
 ```
-No ambiguity whatsoever. Is there anything like this in the docs? No.
-
-But wait, it gets worse.
+No ambiguity whatsoever. Is there anything like this in the docs? Again, no.
 
 ## Problem 3: Setting Properties
-OK, so if you get properties by calling the widget function with the string, how do you even set properties? There's two ways.
+
+OK, so if you get properties by calling the widget function with the string, how do you even set properties? There are two ways.
 ```js
-// 1. Use the same thing as when you're initializing
+// 1. Use the same syntax as when you're initializing
 $('#jqxGrid').jqxGrid({ selectionmode: 'none'}); 
-// 2. Use a string as when you're getting the properties and calling methods
+// 2. Use a string like when you're getting the properties and calling methods
 $('#jqxGrid').jqxGrid('selectionmode', 'none');
 ```
-The first way, while less offensive, still is a problem because it's ambiguous whether you're creating a widget, or just setting a few options. The second way is completely stupid. Don't ever use it. Are you calling a 1-argument method or setting a property? You might think a sensible API would do this:
+The first way, while less offensive, is still a problem because it's ambiguous whether you're creating a widget, or just setting a few options. The second way is completely stupid. Don't ever use it. Are you calling a 1-argument method or setting a property? 
+
+You might think a sensible API would do this:
+
 ```js
 gridRef.selectionmode = 'none';
 ```
@@ -65,17 +73,17 @@ gridRef.option({prop: 'none'});
 // Or even this;
 gridRef.option('prop', 'none');
 ```
-Do the docs show anything like this? Again, no.
+Do the docs show anything like this? Yet again, no.
 
 ## Problem 4: Static analysis and TypeScript
-TypeScript is wonderful. It fixes a lot of the underlying problems that plain JS has. However, the benefit is nullified if you don't have good types to begin with. Because everything is done with strings in JQWidgets, it's extremely difficult to at least hack together a type declaration file that annotates the return type of all these methods. (Plus it's really not my job.) So it looks like there's no choice but to slap `any` everywhere...
 
-...Or not? You see, they actually made a .d.ts file. It's [right here][2], tucked away in their Angular integration code. So that's it, right? All the bad times are over? Well, no. Even if you import it into your TS project, the documented JQuery API is _still_ not recognized. It also has no JSDoc annotations, and `any`s a plenty. So back to square one, it would seem...
+TypeScript is wonderful. It fixes a lot of the underlying problems that plain JS has. However, any benefit is nullified if you don't have good type definitions to begin with. Because everything is done with strings in JQWidgets, it's extremely difficult to at least hack together a type declaration file that annotates the return type of all these methods. (Plus it's really not my job.) So it looks like there's no choice but to slap `any` everywhere...
 
-Oh, wait... what's this method? Oh, my...
+...Or not? You see, they actually made a .d.ts file. It's [right here][2], tucked away in their Angular integration code. So that's it, right? All the bad times are over? Well, no. Even if you import it into your TS project, the documented JQuery API is _still_ not recognized. It also has no JSDoc annotations, and `any` littered everywhere. So back to square one, it would seem... Right?
 
 ## Problem 5: Documentation Failure and mitigation strategies
-So, yeah, remember all the times above when I said the "docs don't show a way to do this?" Well... I'd like to call your attention to [this little line][3] in the .d.ts file and a little method called `createInstance`.
+
+Remember all the times above when I said, "the docs don't show a way to do this?" Well, there's [this line][3] in the .d.ts file and a method called `createInstance`. How does it work?
 
 ### Instances
 You can create instances like so:
@@ -92,7 +100,7 @@ const gridReference: jqwidgets.jqxGrid = $('#data-grid').jqxGrid('getInstance');
 ```
 
 ### Setting Properties
-The only thing that's weird is setting properties. Like I mentioned above, setting properties doesn't refresh the widget. Luckily, they also have `setOptions()`:
+The only thing that's still weird is setting properties. Like I mentioned above, setting properties doesn't refresh the widget. Luckily, they also have `setOptions()`:
 ```js
 // Unfortunately, their .d.ts was somewhat incompetently made, so if you want to make this work, you'll have to modify the .d.ts file to fix their inheritence/implementation mess for them
 gridReference.setOptions({option: value});
